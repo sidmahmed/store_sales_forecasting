@@ -1,7 +1,3 @@
-# use sklearn to develop a pipeline to preprocess the data and train the model
-# the pipeline should load the csv datasets, merge them, do all the transformations as necessary, do the feature engineering we did before (date features, lag features, rolling features, expanding features)
-# then it should preprocess the data (one hot encoding, standard scaling), split the data into training and test data, train the model and save the model
-
 import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
@@ -20,9 +16,9 @@ class LoadData(BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
         # load the data
-        train_df = pd.read_csv('train.csv')
-        store_df = pd.read_csv('stores.csv')
-        feature_df = pd.read_csv('features.csv')
+        train_df = pd.read_csv(os.path.join(f'{PWD}/data', "train.csv"))
+        store_df = pd.read_csv(os.path.join(f'{PWD}/data', "stores.csv"))
+        feature_df = pd.read_csv(os.path.join(f'{PWD}/data', "features.csv"))
 
         # merge the data
         train_df = train_df.merge(store_df, how='left', on='Store').merge(feature_df, how='left', on=['Store', 'Date', 'IsHoliday'])
