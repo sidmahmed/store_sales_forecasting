@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -8,6 +9,22 @@ from sklearn.model_selection import train_test_split
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error
 import joblib
+from zipfile import ZipFile
+import logging
+import time
+
+# Create directories if they dont exist
+log_dir = 'logs'
+model_dir = 'models'
+os.makedirs(log_dir, exist_ok=True)
+os.makedirs(model_dir, exist_ok=True)
+
+# Get the current date
+current_datetime = time.strftime("%Y-%m-%d_%H-%M-%S")
+
+# Configure logging with current date in log file name
+log_file = os.path.join(log_dir, f'Training pipeline_{current_datetime}.log')
+logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class LoadData(BaseEstimator, TransformerMixin):
 
@@ -15,6 +32,21 @@ class LoadData(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
+
+        logging.info('Loading Data...')
+
+        # get the current working directory
+        PWD = os.getcwd()
+
+        # change the working directory to the data directory
+        os.chdir(f'{PWD}/data')
+
+        # extract all zip files in the data directory
+        for file in os.listdir():
+            if file.endswith('.zip'):
+                with ZipFile(file, 'r') as zip_ref:
+                    zip_ref.extractall()
+
         # load the data
         train_df = pd.read_csv(os.path.join(f'{PWD}/data', "train.csv"))
         store_df = pd.read_csv(os.path.join(f'{PWD}/data', "stores.csv"))
@@ -31,6 +63,9 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
+        
+        logging.info('Feature Engineering...')
+
         # extract month
         X['month'] = pd.to_datetime(X['Date']).dt.month
 
@@ -89,6 +124,9 @@ class PreprocessData(BaseEstimator, TransformerMixin):
             return self
     
         def transform(self, X, y=None):
+
+            logging.info('Preprocessing Data...')
+
             # encode categorical variables
             encoder = OneHotEncoder()
             X_encoded = encoder.fit_transform(X[['Store', 'Dept', 'Type']])
@@ -127,6 +165,9 @@ class TrainModel(BaseEstimator, TransformerMixin):
             return self
         
         def transform(self, X, y=None):
+
+            logging.info('Training Model...')
+
             # split the data into training and test data
             X_train = X[X['Date'] < '2012-09-01']
     
@@ -152,15 +193,19 @@ class TrainModel(BaseEstimator, TransformerMixin):
     
             # calculate the rmse
             train_rmse = np.sqrt(mean_squared_error(y_train, train_preds))
+            logging.info(f'Training RMSE {train_rmse}')
     
             # make predictions
             test_preds = model.predict(X_test)
     
             # calculate the rmse
             test_rmse = np.sqrt(mean_squared_error(y_test, test_preds))
-    
+            logging.info(f'Test RMSE {test_rmse}')
+
             # save the model
-            joblib.dump(model, 'model.pkl')
+            model_name = f'./models/model_{time.strftime("%Y-%m-%d_%H-%M-%S")}.pkl'
+            logging.info(f'Saving model as {model_name}')
+            joblib.dump(model, model_name)
     
             return train_rmse, test_rmse
         
@@ -174,4 +219,4 @@ pipeline = Pipeline([
 
 if __name__ == "__main__":
     # Execute the pipeline
-    pipeline.fit(None)
+    pipeline.fit_transform(None)
