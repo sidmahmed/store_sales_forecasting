@@ -1,2 +1,10 @@
-# store_sales_forecasting
-Code for Machine Learning with Coles workshop organized by Monash Association of Coding
+# Setup conda environment
+```bash
+conda env create -f environment.yml
+```
+
+# Activate conda environment
+```bash
+conda activate mlenv
+```
+
