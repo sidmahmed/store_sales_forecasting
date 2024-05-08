@@ -18,6 +18,7 @@ log_dir = 'logs'
 model_dir = 'models'
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(model_dir, exist_ok=True)
+PWD = os.getcwd()
 
 # Get the current date
 current_datetime = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -34,9 +35,6 @@ class LoadData(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
 
         logging.info('Loading Data...')
-
-        # get the current working directory
-        PWD = os.getcwd()
 
         # change the working directory to the data directory
         os.chdir(f'{PWD}/data')
@@ -203,6 +201,7 @@ class TrainModel(BaseEstimator, TransformerMixin):
             logging.info(f'Test RMSE {test_rmse}')
 
             # save the model
+            os.chdir(PWD)
             model_name = f'./models/model_{time.strftime("%Y-%m-%d_%H-%M-%S")}.pkl'
             logging.info(f'Saving model as {model_name}')
             joblib.dump(model, model_name)
